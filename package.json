@@ -2,7 +2,7 @@
   "name": "env-doctor",
   "displayName": "env-doctor",
   "description": "Inline warnings for missing or undocumented environment variables. Squiggles on process.env.VAR not in .env.example — the eslint of env vars.",
-  "version": "0.1.1",
+  "version": "0.1.4",
   "publisher": "neeravjha",
   "license": "MIT",
   "repository": {
@@ -15,7 +15,12 @@
   "categories": ["Linters"],
   "keywords": ["env", "dotenv", "environment", "linter", "variables", "process.env", "missing env", "env checker", "dotenv linter", "environment variables", "env validation"],
   "icon": "icon.png",
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {

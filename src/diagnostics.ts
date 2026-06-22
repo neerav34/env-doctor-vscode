@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { detectVarsInText } from './detector';
 
+export const outputChannel = vscode.window.createOutputChannel('env-doctor');
+
 function parseExampleFile(filePath: string): Set<string> {
   const defined = new Set<string>();
   let content: string;
@@ -22,6 +24,18 @@ function parseExampleFile(filePath: string): Set<string> {
   return defined;
 }
 
+// Walk up from dir until we find exampleFileName or hit the filesystem root
+function findExampleFile(startDir: string, exampleFileName: string): string | null {
+  let dir = startDir;
+  while (true) {
+    const candidate = path.join(dir, exampleFileName);
+    if (fs.existsSync(candidate)) return candidate;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
 export function computeDiagnostics(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection
@@ -32,22 +46,35 @@ export function computeDiagnostics(
     return;
   }
 
-  const workspaceRoot =
-    vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath;
-  if (!workspaceRoot) return;
-
   const exampleFileName = cfg.get<string>('exampleFile', '.env.example');
-  const examplePath = path.join(workspaceRoot, exampleFileName);
+
+  const workspaceRoot = vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath;
+  const fileDir = path.dirname(document.uri.fsPath);
+
+  // Always walk up from the file's directory — handles monorepos and multi-root workspaces
+  const examplePath = findExampleFile(fileDir, exampleFileName);
+
+  outputChannel.appendLine(`[env-doctor] file: ${document.uri.fsPath}`);
+  outputChannel.appendLine(`[env-doctor] workspace root: ${workspaceRoot ?? '(none)'}`);
+  outputChannel.appendLine(`[env-doctor] .env.example found: ${examplePath ?? '(not found)'}`);
+
+  if (!examplePath) {
+    collection.delete(document.uri);
+    return;
+  }
+
   const defined = parseExampleFile(examplePath);
+  outputChannel.appendLine(`[env-doctor] defined vars: ${[...defined].join(', ')}`);
 
   const text = document.getText();
   const usedVars = detectVarsInText(text);
+  outputChannel.appendLine(`[env-doctor] used vars in file: ${usedVars.join(', ')}`);
+
   const diagnostics: vscode.Diagnostic[] = [];
 
   for (const varName of usedVars) {
     if (defined.has(varName)) continue;
 
-    // Find all occurrences in the text and create a diagnostic for each
     const re = new RegExp(
       `process\\.env(?:\\.${varName}|\\[['"]${varName}['"]\\])`,
       'g'
@@ -68,5 +95,6 @@ export function computeDiagnostics(
     }
   }
 
+  outputChannel.appendLine(`[env-doctor] diagnostics: ${diagnostics.length}`);
   collection.set(document.uri, diagnostics);
 }
