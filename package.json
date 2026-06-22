@@ -1,0 +1,51 @@
+{
+  "name": "env-doctor",
+  "displayName": "env-doctor",
+  "description": "The eslint of environment variables — inline warnings for missing or undocumented env vars",
+  "version": "0.1.0",
+  "publisher": "neerav34",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neerav34/env-doctor-vscode"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": ["Linters"],
+  "keywords": ["env", "dotenv", "environment", "linter", "variables"],
+  "icon": "icon.png",
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "env-doctor",
+      "properties": {
+        "envDoctor.exampleFile": {
+          "type": "string",
+          "default": ".env.example",
+          "description": "Path to the .env.example file (relative to workspace root)"
+        },
+        "envDoctor.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable env-doctor diagnostics"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.74.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.0.0"
+  }
+}
