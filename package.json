@@ -3,7 +3,7 @@
   "displayName": "env-doctor",
   "description": "The eslint of environment variables — inline warnings for missing or undocumented env vars",
   "version": "0.1.0",
-  "publisher": "neerav34",
+  "publisher": "neeravjha",
   "license": "MIT",
   "repository": {
     "type": "git",
