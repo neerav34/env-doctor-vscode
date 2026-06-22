@@ -12,10 +12,25 @@ export function activate(context: vscode.ExtensionContext): void {
     computeDiagnostics(doc, collection);
   }
 
-  // Run on all currently open documents
-  for (const doc of vscode.workspace.textDocuments) {
-    runOnDoc(doc);
+  function runOnAllOpen(): void {
+    for (const doc of vscode.workspace.textDocuments) {
+      runOnDoc(doc);
+    }
   }
+
+  // Run on all currently open documents
+  runOnAllOpen();
+
+  // Watch .env.example (and any custom exampleFile) for changes — re-scan all open docs
+  const cfg = vscode.workspace.getConfiguration('envDoctor');
+  const exampleFileName = cfg.get<string>('exampleFile', '.env.example');
+  const watcher = vscode.workspace.createFileSystemWatcher(`**/${exampleFileName}`);
+  context.subscriptions.push(
+    watcher.onDidChange(() => runOnAllOpen()),
+    watcher.onDidCreate(() => runOnAllOpen()),
+    watcher.onDidDelete(() => runOnAllOpen()),
+    watcher
+  );
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(runOnDoc),
@@ -23,9 +38,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidCloseTextDocument(doc => collection.delete(doc.uri)),
     vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('envDoctor')) {
-        for (const doc of vscode.workspace.textDocuments) {
-          runOnDoc(doc);
-        }
+        runOnAllOpen();
       }
     })
   );
